@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { LockKeyhole, Mail, PawPrint, UserRound } from 'lucide-react';
 import { register } from '../services/api';
+import { saveAuthSession } from '../utils/auth';
 import './Auth.css';
 
 function Register() {
@@ -12,8 +14,8 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError('');
 
     if (password !== confirmPassword) {
@@ -30,19 +32,19 @@ function Register() {
 
     try {
       const response = await register(fullName, email, password, confirmPassword);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify({
-        email: response.data.email,
-        fullName: response.data.fullName,
-        role: response.data.role,
-      }));
-      navigate('/dashboard');
+      saveAuthSession({
+        token: response?.data?.token,
+        user: {
+          email: response?.data?.email,
+          fullName: response?.data?.fullName,
+          role: response?.data?.role,
+          profileImageUrl: response?.data?.profileImageUrl || null,
+        },
+      });
+      navigate('/profile', { replace: true });
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('An error occurred. Please try again.');
-      }
+      const message = err?.response?.data?.error || err?.response?.data?.message || err?.message;
+      setError(message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -52,24 +54,28 @@ function Register() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">🐾</div>
+          <div className="auth-logo">
+            <PawPrint size={22} />
+          </div>
           <h1>Create account</h1>
-          <p className="auth-subtitle">Join PetMarket today</p>
+          <p className="auth-subtitle">Start your PetMarket membership</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="auth-error">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="fullName">Full name</label>
+            <label htmlFor="fullName">Full Name</label>
             <div className="input-wrapper">
-              <span className="input-icon">👤</span>
+              <span className="input-icon">
+                <UserRound size={16} />
+              </span>
               <input
                 id="fullName"
                 type="text"
                 placeholder="John Doe"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(event) => setFullName(event.target.value)}
                 required
               />
             </div>
@@ -78,13 +84,15 @@ function Register() {
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <div className="input-wrapper">
-              <span className="input-icon">✉</span>
+              <span className="input-icon">
+                <Mail size={16} />
+              </span>
               <input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 required
               />
             </div>
@@ -93,13 +101,15 @@ function Register() {
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <div className="input-wrapper">
-              <span className="input-icon">🔒</span>
+              <span className="input-icon">
+                <LockKeyhole size={16} />
+              </span>
               <input
                 id="password"
                 type="password"
                 placeholder="Min. 8 characters"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 required
                 minLength={8}
               />
@@ -107,23 +117,21 @@ function Register() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm password</label>
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <div className="input-wrapper">
-              <span className="input-icon">🔒</span>
+              <span className="input-icon">
+                <LockKeyhole size={16} />
+              </span>
               <input
                 id="confirmPassword"
                 type="password"
                 placeholder="Repeat password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 required
               />
             </div>
           </div>
-
-          <p className="terms-text">
-            I agree to the <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>
-          </p>
 
           <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? 'Creating account...' : 'Create account'}
@@ -131,7 +139,7 @@ function Register() {
         </form>
 
         <p className="auth-footer">
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already registered? <Link to="/login">Sign in</Link>
         </p>
       </div>
     </div>
