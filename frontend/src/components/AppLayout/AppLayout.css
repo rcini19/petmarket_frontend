@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+.app-shell {
+  min-height: 100vh;
+  background: #eef3f8;
+  color: #1f2937;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.app-topbar {
+  height: 64px;
+  border-bottom: 1px solid #dbe3ec;
+  background: #ffffff;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 0 24px;
+  gap: 18px;
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #111827;
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+}
+
+.app-brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #eaf3ff;
+  color: #2563eb;
+}
+
+.app-nav {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.app-nav-item.active {
+  color: #2563eb;
+  background: #eaf3ff;
+}
+
+.app-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #eaf3ff;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.app-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.app-user-meta strong {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.app-user-meta span {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.app-logout {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.app-content {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 18px 22px 34px;
+}
+
+@media (max-width: 860px) {
+  .app-topbar {
+    height: auto;
+    padding: 12px;
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .app-nav {
+    justify-content: flex-start;
+  }
+
+  .app-user {
+    justify-content: flex-end;
+  }
+}

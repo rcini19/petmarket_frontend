@@ -73,3 +73,17 @@ export const saveAuthSession = ({ token, user }) => {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
   }
 };
+
+export const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '{}');
+  } catch {
+    return {};
+  }
+};
+
+export const hasRole = (role) => {
+  const storedUser = getStoredUser();
+  const normalizedCurrentRole = String(storedUser?.role || '').trim().toUpperCase();
+  return normalizedCurrentRole === String(role || '').trim().toUpperCase();
+};

@@ -42,7 +42,7 @@ const withPrefix = (prefix, endpoint) => {
   return `${prefix}${normalizeEndpoint(endpoint)}`;
 };
 
-const requestWithFallback = async ({ endpoint, method, data }) => {
+const requestWithFallback = async ({ endpoint, method, data, params }) => {
   let lastError;
 
   // Some backend builds expose /api/* while others expose root paths.
@@ -54,6 +54,7 @@ const requestWithFallback = async ({ endpoint, method, data }) => {
         method,
         url: withPrefix(prefix, endpoint),
         data,
+        params,
       });
     } catch (error) {
       lastError = error;
@@ -133,6 +134,123 @@ export const getTradeHistory = () => {
   return requestWithFallback({
     endpoint: '/profile/me/trades',
     method: 'get',
+  });
+};
+
+export const getPets = (params = {}) => {
+  return requestWithFallback({
+    endpoint: '/pets',
+    method: 'get',
+    params,
+  });
+};
+
+export const getMyPets = () => {
+  return requestWithFallback({
+    endpoint: '/pets/mine',
+    method: 'get',
+  });
+};
+
+export const getPetById = (petId) => {
+  return requestWithFallback({
+    endpoint: `/pets/${petId}`,
+    method: 'get',
+  });
+};
+
+export const createPet = (payload) => {
+  return requestWithFallback({
+    endpoint: '/pets',
+    method: 'post',
+    data: payload,
+  });
+};
+
+export const updatePet = (petId, payload) => {
+  return requestWithFallback({
+    endpoint: `/pets/${petId}`,
+    method: 'put',
+    data: payload,
+  });
+};
+
+export const deletePet = (petId) => {
+  return requestWithFallback({
+    endpoint: `/pets/${petId}`,
+    method: 'delete',
+  });
+};
+
+export const createPurchase = (payload) => {
+  return requestWithFallback({
+    endpoint: '/purchases',
+    method: 'post',
+    data: payload,
+  });
+};
+
+export const getPurchaseById = (purchaseId) => {
+  return requestWithFallback({
+    endpoint: `/purchases/${purchaseId}`,
+    method: 'get',
+  });
+};
+
+export const createTrade = (payload) => {
+  return requestWithFallback({
+    endpoint: '/trades',
+    method: 'post',
+    data: payload,
+  });
+};
+
+export const acceptTrade = (tradeId) => {
+  return requestWithFallback({
+    endpoint: `/trades/${tradeId}/accept`,
+    method: 'put',
+  });
+};
+
+export const rejectTrade = (tradeId) => {
+  return requestWithFallback({
+    endpoint: `/trades/${tradeId}/reject`,
+    method: 'put',
+  });
+};
+
+export const getTrades = () => {
+  return requestWithFallback({
+    endpoint: '/trades',
+    method: 'get',
+  });
+};
+
+export const getAdminPets = () => {
+  return requestWithFallback({
+    endpoint: '/admin/pets',
+    method: 'get',
+  });
+};
+
+export const deleteAdminPet = (petId) => {
+  return requestWithFallback({
+    endpoint: `/admin/pets/${petId}`,
+    method: 'delete',
+  });
+};
+
+export const getAdminUsers = () => {
+  return requestWithFallback({
+    endpoint: '/admin/users',
+    method: 'get',
+  });
+};
+
+export const suspendAdminUser = (userId) => {
+  return requestWithFallback({
+    endpoint: `/admin/users/${userId}/suspend`,
+    method: 'put',
   });
 };
 
