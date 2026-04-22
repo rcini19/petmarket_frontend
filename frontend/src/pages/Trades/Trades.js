@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AppLayout from '../../components/AppLayout/AppLayout';
-import { createTrade, getMyPets, getPets, getTrades, acceptTrade, rejectTrade } from '../../services/api';
+import { createTradeOffer, getMyPets, getPets, getTradeOffers, acceptTradeOffer, rejectTradeOffer } from '../../services/api';
 import { getStoredUser } from '../../utils/auth';
 import './Trades.css';
 
@@ -15,7 +15,7 @@ function Trades() {
   const load = async () => {
     try {
       const [tradesRes, myPetsRes, tradeableRes] = await Promise.all([
-        getTrades(),
+        getTradeOffers(),
         getMyPets(),
         getPets({ listingType: 'TRADE' }),
       ]);
@@ -47,7 +47,7 @@ function Trades() {
     }
 
     try {
-      await createTrade({ offeredPetId: Number(offeredPetId), requestedPetId: Number(requestedPetId) });
+      await createTradeOffer({ offeredPetId: Number(offeredPetId), requestedPetId: Number(requestedPetId) });
       setOfferedPetId('');
       setRequestedPetId('');
       load();
@@ -58,7 +58,7 @@ function Trades() {
 
   const onAccept = async (tradeId) => {
     try {
-      await acceptTrade(tradeId);
+      await acceptTradeOffer(tradeId);
       load();
     } catch {
       // noop
@@ -67,7 +67,7 @@ function Trades() {
 
   const onReject = async (tradeId) => {
     try {
-      await rejectTrade(tradeId);
+      await rejectTradeOffer(tradeId);
       load();
     } catch {
       // noop

@@ -70,6 +70,9 @@ function AdminPanel() {
 
   const activeUsers = useMemo(() => users.filter((user) => !user.suspended).length, [users]);
 
+  const getOrderCount = (user) => Number(user?.orders ?? user?.purchases ?? 0);
+  const getTradeOfferCount = (user) => Number(user?.tradeOffers ?? user?.trades ?? 0);
+
   const onDeleteListing = async (petId) => {
     try {
       await deleteAdminPet(petId);
@@ -193,7 +196,7 @@ function AdminPanel() {
                       <td>{normalizeText(user.role, 'USER')}</td>
                       <td><span className="pill ok">{user.suspended ? 'suspended' : 'active'}</span></td>
                       <td>{formatJoinedDate(user.joinedAt)}</td>
-                      <td>{Number(user.purchases || 0)} purchases • {Number(user.trades || 0)} trades</td>
+                      <td>{getOrderCount(user)} orders • {getTradeOfferCount(user)} trade offers</td>
                       <td>
                         <button
                           className="btn-danger"

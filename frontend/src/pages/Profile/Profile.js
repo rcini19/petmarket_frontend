@@ -178,8 +178,8 @@ function Profile() {
         )}
 
         <div className="stat-row" style={{ marginBottom: 12 }}>
-          <div className="panel-card stat-box"><div><div className="stat-value">{orders.length}</div><div className="stat-label">Purchases</div></div><Mail size={16} color="#2563eb" /></div>
-          <div className="panel-card stat-box"><div><div className="stat-value">{trades.length}</div><div className="stat-label">Trades</div></div><UserRound size={16} color="#2563eb" /></div>
+          <div className="panel-card stat-box"><div><div className="stat-value">{orders.length}</div><div className="stat-label">Orders</div></div><Mail size={16} color="#2563eb" /></div>
+          <div className="panel-card stat-box"><div><div className="stat-value">{trades.length}</div><div className="stat-label">Trade Offers</div></div><UserRound size={16} color="#2563eb" /></div>
           <div className="panel-card stat-box"><div><div className="stat-value">${orders.reduce((s, item) => s + Number(item.amount || 0), 0).toFixed(0)}</div><div className="stat-label">Spent</div></div><Shield size={16} color="#2563eb" /></div>
         </div>
 
@@ -207,7 +207,7 @@ function Profile() {
         </div>
 
         <div className="panel-card" style={{ padding: 12 }}>
-          <h2 style={{ margin: 0, fontSize: 20, marginBottom: 10 }}>Trade History</h2>
+          <h2 style={{ margin: 0, fontSize: 20, marginBottom: 10 }}>Trade Offer History</h2>
           {trades.length === 0 ? (
             <p className="pet-meta">No trade records yet.</p>
           ) : (

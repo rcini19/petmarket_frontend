@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
-import { createPurchase, getPetById } from '../../services/api';
+import { createOrder, getPetById } from '../../services/api';
 import { getStoredUser } from '../../utils/auth';
 import './PetDetail.css';
 
@@ -51,7 +51,7 @@ function PetDetail() {
     }
 
     try {
-      const response = await createPurchase({ petId: pet.id, totalPrice: pet.price });
+      const response = await createOrder({ petId: pet.id, totalPrice: pet.price });
       setPurchaseSummary(response.data);
       setShowConfirm(false);
       const refreshed = await getPetById(id);

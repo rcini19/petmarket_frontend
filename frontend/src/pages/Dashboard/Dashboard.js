@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftRight, Heart, Plus, Search } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
-import { getMyPets, getPets, getTrades } from '../../services/api';
+import { getMyPets, getPets, getTradeOffers } from '../../services/api';
 import { hasRole } from '../../utils/auth';
 import './Dashboard.css';
 
@@ -15,7 +15,7 @@ function Dashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [petsRes, myPetsRes, tradesRes] = await Promise.all([getPets(), getMyPets(), getTrades()]);
+        const [petsRes, myPetsRes, tradesRes] = await Promise.all([getPets(), getMyPets(), getTradeOffers()]);
         setTotalListings((petsRes.data || []).length);
         setMyPetsCount((myPetsRes.data || []).length);
         setPendingTrades((tradesRes.data || []).filter((trade) => trade.status === 'PENDING').length);

@@ -45,7 +45,6 @@ const withPrefix = (prefix, endpoint) => {
 const requestWithFallback = async ({ endpoint, method, data, params }) => {
   let lastError;
 
-  // Some backend builds expose /api/* while others expose root paths.
   for (let index = 0; index < API_PREFIXES.length; index += 1) {
     const prefix = API_PREFIXES[index];
 
@@ -60,6 +59,29 @@ const requestWithFallback = async ({ endpoint, method, data, params }) => {
       lastError = error;
       const hasMorePrefixes = index < API_PREFIXES.length - 1;
       if (!hasMorePrefixes || !shouldRetryWithNextPrefix(error)) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+};
+
+const requestWithEndpointFallback = async ({ endpoints, method, data, params }) => {
+  let lastError;
+
+  for (let index = 0; index < endpoints.length; index += 1) {
+    try {
+      return await requestWithFallback({
+        endpoint: endpoints[index],
+        method,
+        data,
+        params,
+      });
+    } catch (error) {
+      lastError = error;
+      const hasMoreEndpoints = index < endpoints.length - 1;
+      if (!hasMoreEndpoints || !shouldRetryWithNextPrefix(error)) {
         throw error;
       }
     }
@@ -93,10 +115,7 @@ export const loginWithRole = (email, password, loginAs) => {
 };
 
 export const getProfile = () => {
-  return requestWithFallback({
-    endpoint: '/profile/me',
-    method: 'get',
-  });
+  return requestWithFallback({ endpoint: '/profile/me', method: 'get' });
 };
 
 export const updateProfile = (fullName, email) => {
@@ -124,134 +143,109 @@ export const updateProfilePhoto = (profileImageUrl) => {
 };
 
 export const getOrderHistory = () => {
-  return requestWithFallback({
-    endpoint: '/profile/me/orders',
+  return requestWithEndpointFallback({
+    endpoints: ['/profile/me/orders', '/profile/me/purchases'],
     method: 'get',
   });
 };
 
 export const getTradeHistory = () => {
-  return requestWithFallback({
-    endpoint: '/profile/me/trades',
+  return requestWithEndpointFallback({
+    endpoints: ['/profile/me/trade-offers', '/profile/me/trades'],
     method: 'get',
   });
 };
 
 export const getPets = (params = {}) => {
-  return requestWithFallback({
-    endpoint: '/pets',
-    method: 'get',
-    params,
-  });
+  return requestWithFallback({ endpoint: '/pets', method: 'get', params });
 };
 
 export const getMyPets = () => {
-  return requestWithFallback({
-    endpoint: '/pets/mine',
-    method: 'get',
-  });
+  return requestWithFallback({ endpoint: '/pets/mine', method: 'get' });
 };
 
 export const getPetById = (petId) => {
-  return requestWithFallback({
-    endpoint: `/pets/${petId}`,
-    method: 'get',
-  });
+  return requestWithFallback({ endpoint: `/pets/${petId}`, method: 'get' });
 };
 
 export const createPet = (payload) => {
-  return requestWithFallback({
-    endpoint: '/pets',
-    method: 'post',
-    data: payload,
-  });
+  return requestWithFallback({ endpoint: '/pets', method: 'post', data: payload });
 };
 
 export const updatePet = (petId, payload) => {
-  return requestWithFallback({
-    endpoint: `/pets/${petId}`,
-    method: 'put',
-    data: payload,
-  });
+  return requestWithFallback({ endpoint: `/pets/${petId}`, method: 'put', data: payload });
 };
 
 export const deletePet = (petId) => {
-  return requestWithFallback({
-    endpoint: `/pets/${petId}`,
-    method: 'delete',
-  });
+  return requestWithFallback({ endpoint: `/pets/${petId}`, method: 'delete' });
 };
 
-export const createPurchase = (payload) => {
-  return requestWithFallback({
-    endpoint: '/purchases',
+export const createOrder = (payload) => {
+  return requestWithEndpointFallback({
+    endpoints: ['/orders', '/purchases'],
     method: 'post',
     data: payload,
   });
 };
 
-export const getPurchaseById = (purchaseId) => {
-  return requestWithFallback({
-    endpoint: `/purchases/${purchaseId}`,
+export const getOrderById = (orderId) => {
+  return requestWithEndpointFallback({
+    endpoints: [`/orders/${orderId}`, `/purchases/${orderId}`],
     method: 'get',
   });
 };
 
-export const createTrade = (payload) => {
-  return requestWithFallback({
-    endpoint: '/trades',
+export const createPurchase = (payload) => createOrder(payload);
+export const getPurchaseById = (purchaseId) => getOrderById(purchaseId);
+
+export const createTradeOffer = (payload) => {
+  return requestWithEndpointFallback({
+    endpoints: ['/trade-offers', '/trades'],
     method: 'post',
     data: payload,
   });
 };
 
-export const acceptTrade = (tradeId) => {
-  return requestWithFallback({
-    endpoint: `/trades/${tradeId}/accept`,
+export const acceptTradeOffer = (tradeOfferId) => {
+  return requestWithEndpointFallback({
+    endpoints: [`/trade-offers/${tradeOfferId}/accept`, `/trades/${tradeOfferId}/accept`],
     method: 'put',
   });
 };
 
-export const rejectTrade = (tradeId) => {
-  return requestWithFallback({
-    endpoint: `/trades/${tradeId}/reject`,
+export const rejectTradeOffer = (tradeOfferId) => {
+  return requestWithEndpointFallback({
+    endpoints: [`/trade-offers/${tradeOfferId}/reject`, `/trades/${tradeOfferId}/reject`],
     method: 'put',
   });
 };
 
-export const getTrades = () => {
-  return requestWithFallback({
-    endpoint: '/trades',
+export const getTradeOffers = () => {
+  return requestWithEndpointFallback({
+    endpoints: ['/trade-offers', '/trades'],
     method: 'get',
   });
 };
+
+export const createTrade = (payload) => createTradeOffer(payload);
+export const acceptTrade = (tradeId) => acceptTradeOffer(tradeId);
+export const rejectTrade = (tradeId) => rejectTradeOffer(tradeId);
+export const getTrades = () => getTradeOffers();
 
 export const getAdminPets = () => {
-  return requestWithFallback({
-    endpoint: '/admin/pets',
-    method: 'get',
-  });
+  return requestWithFallback({ endpoint: '/admin/pets', method: 'get' });
 };
 
 export const deleteAdminPet = (petId) => {
-  return requestWithFallback({
-    endpoint: `/admin/pets/${petId}`,
-    method: 'delete',
-  });
+  return requestWithFallback({ endpoint: `/admin/pets/${petId}`, method: 'delete' });
 };
 
 export const getAdminUsers = () => {
-  return requestWithFallback({
-    endpoint: '/admin/users',
-    method: 'get',
-  });
+  return requestWithFallback({ endpoint: '/admin/users', method: 'get' });
 };
 
 export const suspendAdminUser = (userId) => {
-  return requestWithFallback({
-    endpoint: `/admin/users/${userId}/suspend`,
-    method: 'put',
-  });
+  return requestWithFallback({ endpoint: `/admin/users/${userId}/suspend`, method: 'put' });
 };
 
 export default API;
