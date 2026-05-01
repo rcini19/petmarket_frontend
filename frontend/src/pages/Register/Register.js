@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LockKeyhole, Mail, PawPrint, UserRound } from 'lucide-react';
+import { LockKeyhole, Mail, PawPrint, UserRound, Shield } from 'lucide-react';
 import { register } from '../../services/api';
 import { saveAuthSession } from '../../utils/auth';
 import './Register.css';
@@ -11,6 +11,7 @@ function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [registerAs, setRegisterAs] = useState('USER');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -31,7 +32,7 @@ function Register() {
     setLoading(true);
 
     try {
-      const response = await register(fullName, email, password, confirmPassword);
+      const response = await register(fullName, email, password, confirmPassword, registerAs);
       saveAuthSession({
         token: response?.data?.token,
         user: {
@@ -41,7 +42,11 @@ function Register() {
           profileImageUrl: response?.data?.profileImageUrl || null,
         },
       });
-      navigate('/dashboard', { replace: true });
+      if (response?.data?.role === 'ADMIN') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err) {
       const message = err?.response?.data?.error || err?.response?.data?.message || err?.message;
       setError(message || 'An unexpected error occurred. Please try again.');
@@ -63,6 +68,30 @@ function Register() {
 
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="auth-error">{error}</div>}
+
+          <div className="role-group">
+            <p>Register as</p>
+            <div className="role-options" role="radiogroup" aria-label="Select account role">
+              <button
+                type="button"
+                className={`role-option ${registerAs === 'USER' ? 'active' : ''}`}
+                onClick={() => setRegisterAs('USER')}
+                aria-pressed={registerAs === 'USER'}
+              >
+                <UserRound size={16} />
+                <span>User</span>
+              </button>
+              <button
+                type="button"
+                className={`role-option ${registerAs === 'ADMIN' ? 'active' : ''}`}
+                onClick={() => setRegisterAs('ADMIN')}
+                aria-pressed={registerAs === 'ADMIN'}
+              >
+                <Shield size={16} />
+                <span>Admin</span>
+              </button>
+            </div>
+          </div>
 
           <div className="form-group">
             <label htmlFor="fullName">Full Name</label>

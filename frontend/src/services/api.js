@@ -98,11 +98,11 @@ export const login = (email, password) => {
   });
 };
 
-export const register = (fullName, email, password, confirmPassword) => {
+export const register = (fullName, email, password, confirmPassword, registerAs = 'USER') => {
   return requestWithFallback({
     endpoint: '/auth/register',
     method: 'post',
-    data: { fullName, email, password, confirmPassword },
+    data: { fullName, email, password, confirmPassword, role: registerAs },
   });
 };
 
@@ -157,11 +157,28 @@ export const getTradeHistory = () => {
 };
 
 export const getPets = (params = {}) => {
-  return requestWithFallback({ endpoint: '/pets', method: 'get', params });
+  const queryParams = {
+    search: params.search || undefined,
+    listingType: params.listingType || undefined,
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  // Remove undefined values
+  Object.keys(queryParams).forEach(key =>
+    queryParams[key] === undefined && delete queryParams[key]
+  );
+
+  return requestWithFallback({ endpoint: '/pets', method: 'get', params: queryParams });
 };
 
-export const getMyPets = () => {
-  return requestWithFallback({ endpoint: '/pets/mine', method: 'get' });
+export const getMyPets = (params = {}) => {
+  const queryParams = {
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  return requestWithFallback({ endpoint: '/pets/mine', method: 'get', params: queryParams });
 };
 
 export const getPetById = (petId) => {
@@ -232,16 +249,26 @@ export const acceptTrade = (tradeId) => acceptTradeOffer(tradeId);
 export const rejectTrade = (tradeId) => rejectTradeOffer(tradeId);
 export const getTrades = () => getTradeOffers();
 
-export const getAdminPets = () => {
-  return requestWithFallback({ endpoint: '/admin/pets', method: 'get' });
+export const getAdminPets = (params = {}) => {
+  const queryParams = {
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  return requestWithFallback({ endpoint: '/admin/pets', method: 'get', params: queryParams });
 };
 
 export const deleteAdminPet = (petId) => {
   return requestWithFallback({ endpoint: `/admin/pets/${petId}`, method: 'delete' });
 };
 
-export const getAdminUsers = () => {
-  return requestWithFallback({ endpoint: '/admin/users', method: 'get' });
+export const getAdminUsers = (params = {}) => {
+  const queryParams = {
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  return requestWithFallback({ endpoint: '/admin/users', method: 'get', params: queryParams });
 };
 
 export const suspendAdminUser = (userId) => {
@@ -249,3 +276,4 @@ export const suspendAdminUser = (userId) => {
 };
 
 export default API;
+
