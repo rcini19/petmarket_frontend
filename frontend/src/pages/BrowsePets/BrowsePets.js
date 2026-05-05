@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
-import { getPets } from '../../services/api';
-import { getStoredUser } from '../../utils/auth';
+import { getPets, getProfile } from '../../services/api';
+import { getStoredUser, updateStoredUser } from '../../utils/auth';
 import './BrowsePets.css';
 
 function BrowsePets() {
@@ -13,7 +13,31 @@ function BrowsePets() {
   const [filterType, setFilterType] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
-  const currentUser = getStoredUser();
+  const [currentUser, setCurrentUser] = useState(getStoredUser);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      return;
+    }
+
+    const loadCurrentUser = async () => {
+      try {
+        const response = await getProfile();
+        const updatedUser = updateStoredUser({
+          id: response.data?.id,
+          email: response.data?.email,
+          fullName: response.data?.fullName,
+          role: response.data?.role,
+          profileImageUrl: response.data?.profileImageUrl || null,
+        });
+        setCurrentUser(updatedUser);
+      } catch {
+        // Existing page requests will handle auth/session failures.
+      }
+    };
+
+    loadCurrentUser();
+  }, [currentUser?.id]);
 
   useEffect(() => {
     const load = async () => {
@@ -23,7 +47,6 @@ function BrowsePets() {
         setPets(response.data?.content || []);
         setPageInfo(response.data?.pageInfo || null);
       } catch (err) {
-        console.error('Error loading pets:', err);
         setPets([]);
         setPageInfo(null);
       } finally {
@@ -40,7 +63,7 @@ function BrowsePets() {
   }, [pageInfo]);
 
   const isOwnPet = (pet) => {
-    return currentUser?.id && pet.ownerId === currentUser.id;
+    return currentUser?.id && Number(pet.ownerId) === Number(currentUser.id);
   };
 
   const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=900';
@@ -117,7 +140,7 @@ function BrowsePets() {
                   fontWeight: 700,
                   zIndex: 1
                 }}>
-                  Your Listing
+                  Your Pet
                 </div>
               )}
               <img

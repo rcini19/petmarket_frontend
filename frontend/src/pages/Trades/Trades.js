@@ -20,8 +20,8 @@ function Trades() {
         getPets({ listingType: 'TRADE' }),
       ]);
       setTrades(tradesRes.data || []);
-      setMyPets(myPetsRes.data || []);
-      setTradeablePets(tradeableRes.data || []);
+      setMyPets(myPetsRes.data?.content || []);
+      setTradeablePets(tradeableRes.data?.content || []);
     } catch {
       setTrades([]);
       setMyPets([]);

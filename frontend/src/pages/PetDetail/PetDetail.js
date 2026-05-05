@@ -2,25 +2,57 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
-import { createOrder, getPetById } from '../../services/api';
-import { getStoredUser } from '../../utils/auth';
+import { createOrder, getPetById, getProfile } from '../../services/api';
+import { getStoredUser, updateStoredUser } from '../../utils/auth';
 import './PetDetail.css';
 
 function PetDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [pet, setPet] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [purchaseSummary, setPurchaseSummary] = useState(null);
-  const currentUser = getStoredUser();
+  const [currentUser, setCurrentUser] = useState(getStoredUser);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      return;
+    }
+
+    const loadCurrentUser = async () => {
+      try {
+        const response = await getProfile();
+        const updatedUser = updateStoredUser({
+          id: response.data?.id,
+          email: response.data?.email,
+          fullName: response.data?.fullName,
+          role: response.data?.role,
+          profileImageUrl: response.data?.profileImageUrl || null,
+        });
+        setCurrentUser(updatedUser);
+      } catch {
+        // Pet loading and the global API handler will handle auth/session failures.
+      }
+    };
+
+    loadCurrentUser();
+  }, [currentUser?.id]);
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
+      setLoadError('');
+      setPet(null);
       try {
         const response = await getPetById(id);
         setPet(response.data);
       } catch {
         setPet(null);
+        setLoadError('Pet listing not found.');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -28,7 +60,7 @@ function PetDetail() {
   }, [id]);
 
   const isOwnPet = useMemo(() => {
-    return currentUser?.id && pet?.ownerId === currentUser.id;
+    return currentUser?.id && Number(pet?.ownerId) === Number(currentUser.id);
   }, [pet, currentUser]);
 
   const canPurchase = useMemo(() => {
@@ -61,10 +93,18 @@ function PetDetail() {
     }
   };
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="panel-card" style={{ padding: 18 }}>Loading pet details...</div>
+      </AppLayout>
+    );
+  }
+
   if (!pet) {
     return (
       <AppLayout>
-        <div className="panel-card" style={{ padding: 18 }}>Pet listing not found.</div>
+        <div className="panel-card" style={{ padding: 18 }}>{loadError || 'Pet listing not found.'}</div>
       </AppLayout>
     );
   }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
 import { deleteAdminPet, getAdminPets, getAdminUsers, suspendAdminUser } from '../../services/api';
@@ -37,7 +37,7 @@ function AdminPanel() {
     return parsed.toISOString().slice(0, 10);
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setLoadError('');
     try {
@@ -61,11 +61,11 @@ function AdminPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [petPage, userPage]);
 
   useEffect(() => {
     load();
-  }, [petPage, userPage]);
+  }, [load]);
 
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();

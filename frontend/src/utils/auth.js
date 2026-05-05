@@ -82,7 +82,21 @@ export const getStoredUser = () => {
   }
 };
 
+export const updateStoredUser = (userUpdates = {}) => {
+  const currentUser = getStoredUser();
+  const nextUser = { ...currentUser, ...userUpdates };
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(nextUser));
+  return nextUser;
+};
+
+export const clearSession = () => {
+  clearAuthStorage();
+};
+
 export const hasRole = (role) => {
+  // NOTE: This is a CLIENT-SIDE CHECK ONLY for UX purposes
+  // SECURITY: Real role validation must be done server-side
+  // The backend will return 403 for unauthorized admin requests
   const storedUser = getStoredUser();
   const normalizedCurrentRole = String(storedUser?.role || '').trim().toUpperCase();
   return normalizedCurrentRole === String(role || '').trim().toUpperCase();

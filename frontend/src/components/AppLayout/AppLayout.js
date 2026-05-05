@@ -26,6 +26,7 @@ function AppLayout({ children }) {
       .map((part) => part[0].toUpperCase())
       .join('');
   }, [user?.fullName]);
+  const profileImageUrl = user?.profileImageUrl;
 
   const navItems = isAdmin
     ? [...baseNavItems, { to: '/admin', label: 'Admin', icon: Shield }]
@@ -61,7 +62,13 @@ function AppLayout({ children }) {
         </nav>
 
         <div className="app-user">
-          <div className="app-avatar">{initials || 'PM'}</div>
+          <div className="app-avatar">
+            {profileImageUrl ? (
+              <img src={profileImageUrl} alt={user?.fullName || 'Profile'} />
+            ) : (
+              initials || 'PM'
+            )}
+          </div>
           <div className="app-user-meta">
             <strong>{user?.fullName || 'User'}</strong>
             <span>{isAdmin ? 'Admin' : 'Member'}</span>

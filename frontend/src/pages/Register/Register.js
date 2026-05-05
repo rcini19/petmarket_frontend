@@ -36,17 +36,14 @@ function Register() {
       saveAuthSession({
         token: response?.data?.token,
         user: {
+          id: response?.data?.id,
           email: response?.data?.email,
           fullName: response?.data?.fullName,
           role: response?.data?.role,
           profileImageUrl: response?.data?.profileImageUrl || null,
         },
       });
-      if (response?.data?.role === 'ADMIN') {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       const message = err?.response?.data?.error || err?.response?.data?.message || err?.message;
       setError(message || 'An unexpected error occurred. Please try again.');

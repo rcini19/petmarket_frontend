@@ -125,13 +125,17 @@ function ListingForm() {
             imageUrl = await uploadPetImage(imageFile, user?.email || user?.id || 'guest');
           } catch (uploadErr) {
             // Image upload failed, but continue without image
-            console.warn('Image upload failed:', uploadErr.message);
+            if (process.env.REACT_APP_ENVIRONMENT !== 'production') {
+              console.warn('Image upload failed:', uploadErr.message);
+            }
             setError('Image upload failed. Creating listing without image.');
             imageUrl = '';
           }
         } else {
           // Storage not configured, continue without image
-          console.warn('Supabase storage not configured, skipping image upload');
+          if (process.env.REACT_APP_ENVIRONMENT !== 'production') {
+            console.warn('Supabase storage not configured, skipping image upload');
+          }
         }
       }
 
@@ -142,18 +146,16 @@ function ListingForm() {
         price: form.listingType === 'TRADE' ? null : Number(form.price || 0),
       };
 
-      console.log('Creating pet with payload:', payload);
-
       if (isEdit) {
-        const response = await updatePet(id, payload);
-        console.log('Update response:', response.data);
+        await updatePet(id, payload);
       } else {
-        const response = await createPet(payload);
-        console.log('Create response:', response.data);
+        await createPet(payload);
       }
       navigate('/my-pets');
     } catch (err) {
-      console.error('Error saving listing:', err);
+      if (process.env.REACT_APP_ENVIRONMENT !== 'production') {
+        console.error('Error saving listing:', err);
+      }
       const errorMsg = err?.response?.data?.error || err?.response?.data?.message || err?.message || 'Unable to save listing.';
       setError(errorMsg);
     } finally {

@@ -7,7 +7,11 @@ import reportWebVitals from './reportWebVitals';
 
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', event => {
-  console.error('Unhandled promise rejection:', event.reason);
+  // In production, send to error tracking service like Sentry
+  // For now, silently handle to prevent console spam
+  if (process.env.REACT_APP_ENVIRONMENT !== 'production') {
+    console.error('Unhandled promise rejection:', event.reason);
+  }
 });
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

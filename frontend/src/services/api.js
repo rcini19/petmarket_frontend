@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getValidToken } from '../utils/auth';
+import { getValidToken, clearSession } from '../utils/auth';
 
 const normalizePrefix = (prefix) => {
   const trimmed = (prefix || '').trim();
@@ -32,6 +32,31 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+
+const isAuthEndpoint = (url = '') => {
+  const normalizedUrl = String(url).toLowerCase();
+  return normalizedUrl.endsWith('/auth/login') || normalizedUrl.endsWith('/auth/register');
+};
+
+// Handle expired/invalid sessions. A 403 can be a valid "not allowed" response
+// for protected actions or fallback endpoint probes, so it should not log out.
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+
+    if (status === 401 && !isAuthEndpoint(error?.config?.url)) {
+      // Clear session and redirect to login
+      clearSession();
+      // Redirect to login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 const shouldRetryWithNextPrefix = (error) => {
   const status = error?.response?.status;

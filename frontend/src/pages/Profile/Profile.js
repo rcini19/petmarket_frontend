@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, LoaderCircle, Mail, PencilLine, Shield, UserRound } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
 import { changePassword, getOrderHistory, getProfile, getTradeHistory, updateProfile, updateProfilePhoto } from '../../services/api';
-import { clearAuthStorage, saveAuthSession } from '../../utils/auth';
+import { clearAuthStorage, saveAuthSession, updateStoredUser } from '../../utils/auth';
 import './Profile.css';
 
 function Profile() {
@@ -25,6 +25,13 @@ function Profile() {
       setOrders(orderRes.data || []);
       setTrades(tradeRes.data || []);
       setProfileForm({ fullName: profileRes.data.fullName || '', email: profileRes.data.email || '' });
+      updateStoredUser({
+        id: profileRes.data.id,
+        email: profileRes.data.email,
+        fullName: profileRes.data.fullName,
+        role: profileRes.data.role,
+        profileImageUrl: profileRes.data.profileImageUrl || null,
+      });
     } catch {
       clearAuthStorage();
     }
@@ -51,6 +58,7 @@ function Profile() {
         saveAuthSession({
           token: payload.token,
           user: {
+            id: payload.id,
             email: payload.email,
             fullName: payload.fullName,
             role: payload.role,
@@ -102,6 +110,13 @@ function Profile() {
       const updated = response?.data?.profile;
       if (updated) {
         setProfile(updated);
+        updateStoredUser({
+          id: updated.id,
+          email: updated.email,
+          fullName: updated.fullName,
+          role: updated.role,
+          profileImageUrl: updated.profileImageUrl || null,
+        });
       }
       setFeedback(response?.data?.message || 'Profile photo updated.');
     } catch (error) {
