@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LockKeyhole, Mail, PawPrint, Shield, UserRound } from 'lucide-react';
-import { loginWithRole } from '../services/api';
-import { saveAuthSession } from '../utils/auth';
-import './Auth.css';
+import { loginWithRole } from '../../services/api';
+import { saveAuthSession } from '../../utils/auth';
+import './Login.css';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -23,13 +23,14 @@ function Login() {
       saveAuthSession({
         token: response?.data?.token,
         user: {
+          id: response?.data?.id,
           email: response?.data?.email,
           fullName: response?.data?.fullName,
           role: response?.data?.role,
           profileImageUrl: response?.data?.profileImageUrl || null,
         },
       });
-      navigate('/profile', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       const message = err?.response?.data?.error || err?.response?.data?.message || err?.message;
       setError(message || 'An unexpected error occurred. Please try again.');

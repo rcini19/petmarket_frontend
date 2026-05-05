@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getValidToken } from '../utils/auth';
+import { getValidToken, clearSession } from '../utils/auth';
 
 const normalizePrefix = (prefix) => {
   const trimmed = (prefix || '').trim();
@@ -33,6 +33,31 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+const isAuthEndpoint = (url = '') => {
+  const normalizedUrl = String(url).toLowerCase();
+  return normalizedUrl.endsWith('/auth/login') || normalizedUrl.endsWith('/auth/register');
+};
+
+// Handle expired/invalid sessions. A 403 can be a valid "not allowed" response
+// for protected actions or fallback endpoint probes, so it should not log out.
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+
+    if (status === 401 && !isAuthEndpoint(error?.config?.url)) {
+      // Clear session and redirect to login
+      clearSession();
+      // Redirect to login page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 const shouldRetryWithNextPrefix = (error) => {
   const status = error?.response?.status;
   return status === 403 || status === 404;
@@ -42,10 +67,9 @@ const withPrefix = (prefix, endpoint) => {
   return `${prefix}${normalizeEndpoint(endpoint)}`;
 };
 
-const requestWithFallback = async ({ endpoint, method, data }) => {
+const requestWithFallback = async ({ endpoint, method, data, params }) => {
   let lastError;
 
-  // Some backend builds expose /api/* while others expose root paths.
   for (let index = 0; index < API_PREFIXES.length; index += 1) {
     const prefix = API_PREFIXES[index];
 
@@ -54,11 +78,35 @@ const requestWithFallback = async ({ endpoint, method, data }) => {
         method,
         url: withPrefix(prefix, endpoint),
         data,
+        params,
       });
     } catch (error) {
       lastError = error;
       const hasMorePrefixes = index < API_PREFIXES.length - 1;
       if (!hasMorePrefixes || !shouldRetryWithNextPrefix(error)) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+};
+
+const requestWithEndpointFallback = async ({ endpoints, method, data, params }) => {
+  let lastError;
+
+  for (let index = 0; index < endpoints.length; index += 1) {
+    try {
+      return await requestWithFallback({
+        endpoint: endpoints[index],
+        method,
+        data,
+        params,
+      });
+    } catch (error) {
+      lastError = error;
+      const hasMoreEndpoints = index < endpoints.length - 1;
+      if (!hasMoreEndpoints || !shouldRetryWithNextPrefix(error)) {
         throw error;
       }
     }
@@ -75,11 +123,11 @@ export const login = (email, password) => {
   });
 };
 
-export const register = (fullName, email, password, confirmPassword) => {
+export const register = (fullName, email, password, confirmPassword, registerAs = 'USER') => {
   return requestWithFallback({
     endpoint: '/auth/register',
     method: 'post',
-    data: { fullName, email, password, confirmPassword },
+    data: { fullName, email, password, confirmPassword, role: registerAs },
   });
 };
 
@@ -92,10 +140,7 @@ export const loginWithRole = (email, password, loginAs) => {
 };
 
 export const getProfile = () => {
-  return requestWithFallback({
-    endpoint: '/profile/me',
-    method: 'get',
-  });
+  return requestWithFallback({ endpoint: '/profile/me', method: 'get' });
 };
 
 export const updateProfile = (fullName, email) => {
@@ -123,17 +168,137 @@ export const updateProfilePhoto = (profileImageUrl) => {
 };
 
 export const getOrderHistory = () => {
-  return requestWithFallback({
-    endpoint: '/profile/me/orders',
+  return requestWithEndpointFallback({
+    endpoints: ['/profile/me/orders', '/profile/me/purchases'],
     method: 'get',
   });
 };
 
 export const getTradeHistory = () => {
-  return requestWithFallback({
-    endpoint: '/profile/me/trades',
+  return requestWithEndpointFallback({
+    endpoints: ['/profile/me/trade-offers', '/profile/me/trades'],
     method: 'get',
   });
 };
 
+export const getPets = (params = {}) => {
+  const queryParams = {
+    search: params.search || undefined,
+    listingType: params.listingType || undefined,
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  // Remove undefined values
+  Object.keys(queryParams).forEach(key =>
+    queryParams[key] === undefined && delete queryParams[key]
+  );
+
+  return requestWithFallback({ endpoint: '/pets', method: 'get', params: queryParams });
+};
+
+export const getMyPets = (params = {}) => {
+  const queryParams = {
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  return requestWithFallback({ endpoint: '/pets/mine', method: 'get', params: queryParams });
+};
+
+export const getPetById = (petId) => {
+  return requestWithFallback({ endpoint: `/pets/${petId}`, method: 'get' });
+};
+
+export const createPet = (payload) => {
+  return requestWithFallback({ endpoint: '/pets', method: 'post', data: payload });
+};
+
+export const updatePet = (petId, payload) => {
+  return requestWithFallback({ endpoint: `/pets/${petId}`, method: 'put', data: payload });
+};
+
+export const deletePet = (petId) => {
+  return requestWithFallback({ endpoint: `/pets/${petId}`, method: 'delete' });
+};
+
+export const createOrder = (payload) => {
+  return requestWithEndpointFallback({
+    endpoints: ['/orders', '/purchases'],
+    method: 'post',
+    data: payload,
+  });
+};
+
+export const getOrderById = (orderId) => {
+  return requestWithEndpointFallback({
+    endpoints: [`/orders/${orderId}`, `/purchases/${orderId}`],
+    method: 'get',
+  });
+};
+
+export const createPurchase = (payload) => createOrder(payload);
+export const getPurchaseById = (purchaseId) => getOrderById(purchaseId);
+
+export const createTradeOffer = (payload) => {
+  return requestWithEndpointFallback({
+    endpoints: ['/trade-offers', '/trades'],
+    method: 'post',
+    data: payload,
+  });
+};
+
+export const acceptTradeOffer = (tradeOfferId) => {
+  return requestWithEndpointFallback({
+    endpoints: [`/trade-offers/${tradeOfferId}/accept`, `/trades/${tradeOfferId}/accept`],
+    method: 'put',
+  });
+};
+
+export const rejectTradeOffer = (tradeOfferId) => {
+  return requestWithEndpointFallback({
+    endpoints: [`/trade-offers/${tradeOfferId}/reject`, `/trades/${tradeOfferId}/reject`],
+    method: 'put',
+  });
+};
+
+export const getTradeOffers = () => {
+  return requestWithEndpointFallback({
+    endpoints: ['/trade-offers', '/trades'],
+    method: 'get',
+  });
+};
+
+export const createTrade = (payload) => createTradeOffer(payload);
+export const acceptTrade = (tradeId) => acceptTradeOffer(tradeId);
+export const rejectTrade = (tradeId) => rejectTradeOffer(tradeId);
+export const getTrades = () => getTradeOffers();
+
+export const getAdminPets = (params = {}) => {
+  const queryParams = {
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  return requestWithFallback({ endpoint: '/admin/pets', method: 'get', params: queryParams });
+};
+
+export const deleteAdminPet = (petId) => {
+  return requestWithFallback({ endpoint: `/admin/pets/${petId}`, method: 'delete' });
+};
+
+export const getAdminUsers = (params = {}) => {
+  const queryParams = {
+    page: params.page !== undefined ? params.page : 0,
+    pageSize: params.pageSize || 20,
+  };
+
+  return requestWithFallback({ endpoint: '/admin/users', method: 'get', params: queryParams });
+};
+
+export const suspendAdminUser = (userId) => {
+  return requestWithFallback({ endpoint: `/admin/users/${userId}/suspend`, method: 'put' });
+};
+
 export default API;
+
