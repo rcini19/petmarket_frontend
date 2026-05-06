@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Search, User, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
 import { getPets, getProfile } from '../../services/api';
 import { getStoredUser, updateStoredUser } from '../../utils/auth';
 import './BrowsePets.css';
 
 function BrowsePets() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [pets, setPets] = useState([]);
   const [pageInfo, setPageInfo] = useState(null);
   const [search, setSearch] = useState('');
@@ -14,6 +16,14 @@ function BrowsePets() {
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(getStoredUser);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(location.state?.purchaseSuccess || null);
+
+  useEffect(() => {
+    if (location.state?.purchaseSuccess) {
+      setPurchaseSuccess(location.state.purchaseSuccess);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
     if (currentUser?.id) {
@@ -95,6 +105,11 @@ function BrowsePets() {
     setCurrentPage(0);
   };
 
+  const formatMoney = (value) => {
+    const amount = Number(value || 0);
+    return amount.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+  };
+
   return (
     <AppLayout>
       <section className="market-page">
@@ -102,6 +117,16 @@ function BrowsePets() {
           <h1>Browse Pets</h1>
           <p>Find your perfect companion</p>
         </div>
+
+        {purchaseSuccess && (
+          <div className="purchase-success">
+            <CheckCircle2 size={18} />
+            <span>
+              You have purchased <strong>{purchaseSuccess.petName}</strong> for <strong>{formatMoney(purchaseSuccess.totalPrice)}</strong>.
+            </span>
+            <button type="button" onClick={() => setPurchaseSuccess(null)}>Dismiss</button>
+          </div>
+        )}
 
         <div className="panel-card" style={{ padding: 10, marginBottom: 12 }}>
           <div className="search-row">

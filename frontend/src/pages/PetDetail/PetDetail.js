@@ -13,7 +13,6 @@ function PetDetail() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [purchaseSummary, setPurchaseSummary] = useState(null);
   const [currentUser, setCurrentUser] = useState(getStoredUser);
 
   useEffect(() => {
@@ -84,10 +83,16 @@ function PetDetail() {
 
     try {
       const response = await createOrder({ petId: pet.id, totalPrice: pet.price });
-      setPurchaseSummary(response.data);
       setShowConfirm(false);
-      const refreshed = await getPetById(id);
-      setPet(refreshed.data);
+      navigate('/browse', {
+        replace: true,
+        state: {
+          purchaseSuccess: {
+            petName: response.data?.petName || pet.name,
+            totalPrice: response.data?.totalPrice || pet.price,
+          },
+        },
+      });
     } catch {
       setShowConfirm(false);
     }
@@ -212,12 +217,6 @@ function PetDetail() {
           </div>
         )}
 
-        {purchaseSummary && (
-          <div className="panel-card" style={{ marginTop: 12, padding: 12 }}>
-            <h3 style={{ margin: 0, fontSize: 20 }}>Transaction Summary</h3>
-            <p className="pet-meta">Purchase ID #{purchaseSummary.id} • {purchaseSummary.petName} • ${purchaseSummary.totalPrice}</p>
-          </div>
-        )}
       </section>
     </AppLayout>
   );
