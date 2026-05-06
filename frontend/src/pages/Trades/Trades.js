@@ -45,6 +45,14 @@ function Trades() {
     return tradeablePets.filter((pet) => pet.ownerId !== currentUser.id);
   }, [tradeablePets, currentUser]);
 
+  const offerablePets = useMemo(() => {
+    return myPets.filter((pet) => {
+      const status = String(pet.status || '').toUpperCase();
+      const listingType = String(pet.listingType || '').toUpperCase();
+      return status === 'AVAILABLE' && (listingType === 'TRADE' || listingType === 'BOTH');
+    });
+  }, [myPets]);
+
   const visibleTrades = useMemo(() => {
     if (!currentUser?.id) {
       return trades;
@@ -146,7 +154,7 @@ function Trades() {
           <div className="search-row">
             <select value={offeredPetId} onChange={(event) => setOfferedPetId(event.target.value)}>
               <option value="">Select your offered pet</option>
-              {myPets.map((pet) => <option key={pet.id} value={pet.id}>{pet.name}</option>)}
+              {offerablePets.map((pet) => <option key={pet.id} value={pet.id}>{pet.name}</option>)}
             </select>
             <select value={requestedPetId} onChange={(event) => setRequestedPetId(event.target.value)}>
               <option value="">Select requested pet</option>
