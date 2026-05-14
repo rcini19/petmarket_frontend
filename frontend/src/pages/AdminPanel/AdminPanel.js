@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AppLayout from '../../components/AppLayout/AppLayout';
-import { getAdminPets, getAdminUsers } from '../../services/api';
+import { getAdminPets, getAdminUsers, suspendAdminUser } from '../../services/api';
 import { hasRole } from '../../utils/auth';
 import './AdminPanel.css';
 
@@ -13,6 +13,7 @@ function AdminPanel() {
   const [userPageInfo, setUserPageInfo] = useState(null);
   const [search, setSearch] = useState('');
   const [loadError, setLoadError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [loading, setLoading] = useState(true);
   const [petPage, setPetPage] = useState(0);
   const [userPage, setUserPage] = useState(0);
@@ -87,6 +88,17 @@ function AdminPanel() {
   const getOrderCount = (user) => Number(user?.orders ?? user?.purchases ?? 0);
   const getTradeOfferCount = (user) => Number(user?.tradeOffers ?? user?.trades ?? 0);
 
+  const onSuspendUser = async (userId) => {
+    setActionError('');
+    try {
+      await suspendAdminUser(userId);
+      load();
+    } catch (error) {
+      const message = error?.response?.data?.error || error?.response?.data?.message || 'Failed to suspend user';
+      setActionError(message);
+    }
+  };
+
   if (!hasRole('ADMIN')) {
     return (
       <AppLayout>
@@ -106,6 +118,27 @@ function AdminPanel() {
         {loadError && (
           <div className="panel-card" style={{ padding: 12, marginBottom: 12, borderColor: '#fecaca', color: '#b91c1c' }}>
             {loadError}
+          </div>
+        )}
+
+        {actionError && (
+          <div className="panel-card" style={{ padding: 12, marginBottom: 12, borderColor: '#fecaca', color: '#b91c1c' }}>
+            {actionError}
+            <button
+              onClick={() => setActionError('')}
+              style={{
+                marginLeft: 12,
+                padding: '4px 8px',
+                background: '#b91c1c',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 4,
+                fontSize: 12,
+                cursor: 'pointer'
+              }}
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -233,6 +266,7 @@ function AdminPanel() {
                     <th>Status</th>
                     <th>Joined</th>
                     <th>Activity</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -244,6 +278,15 @@ function AdminPanel() {
                       <td><span className="pill ok">{user.suspended ? 'suspended' : 'active'}</span></td>
                       <td>{formatJoinedDate(user.createdAt)}</td>
                       <td>{getOrderCount(user)} orders • {getTradeOfferCount(user)} trade offers</td>
+                      <td>
+                        <button
+                          className="btn-danger"
+                          disabled={user.suspended || String(user.role || '').toUpperCase() === 'ADMIN'}
+                          onClick={() => onSuspendUser(user.id)}
+                        >
+                          Suspend
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
